@@ -1,10 +1,14 @@
-import React from 'react';
+import * as C from './App.styles';
 
 function App() {
   return (
-    <div className="App">
-      <div>Hello World</div>
-    </div>
+    <C.Container>
+      <C.Area>
+        <C.Header>Photo Gallery</C.Header>
+        
+        
+      </C.Area>
+    </C.Container>
   );
 }
 
