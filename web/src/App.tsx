@@ -3,19 +3,31 @@ import * as C from './App.styles';
 import * as Photos from './services/photos';
 import Photo from './types/Photo';
 import { PhotoItem } from './components/PhotoItem';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
   const [uploading, setUploading] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [photos, setPhotos] = useState<Photo[]>([]);
 
   useEffect(() => {
-    const getPhotos = async () => {
-      setLoading(true);
-      setPhotos(await Photos.getAll());
-      setLoading(false);
-    }
-    getPhotos();
+    toast.promise(Photos.getAll(), {
+      pending: {
+        render: () => 'Getting Photos from Bucket'
+      },
+      success: {
+        render: res => {
+          setPhotos(res.data as Photo[]);
+          return 'Photos Loaded'
+        }
+      },
+      error: {
+        render: rej => {
+          console.log(rej.data);
+          return 'error';
+        }
+      }
+    })
   }, []);
 
   const handleFormSubmit = async (evt : React.FormEvent<HTMLFormElement>) => {
@@ -40,14 +52,9 @@ function App() {
 
   return (
     <C.Container>
+      <ToastContainer theme='dark'  autoClose={1000}/>
       <C.Area>
         <C.Header>Photo Gallery</C.Header>
-        
-        {loading &&
-        <C.ScreenWarning>
-            <div className='emoji'>🤚</div>
-            <div>Loading...</div>
-        </C.ScreenWarning>}
 
         <C.UploadForm method='POST' onSubmit={handleFormSubmit}>
             <input type="file" name='image' />
@@ -55,7 +62,7 @@ function App() {
             {uploading && 'Uploading image...'}
         </C.UploadForm>
 
-        {!loading && photos.length > 0 &&
+        {photos.length > 0 &&
             <C.PhotoList>
               {photos.map((item, index) => (
                 <PhotoItem key={index} url={item.url}  name={item.name}/>
@@ -63,7 +70,7 @@ function App() {
             </C.PhotoList>
         }
 
-      {!loading && photos.length === 0 &&
+      {photos.length === 0 &&
         <C.ScreenWarning>
             <div className='emoji'>:/</div>
             <div>There is no photo in the bucket</div>
