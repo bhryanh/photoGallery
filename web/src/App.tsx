@@ -7,7 +7,6 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
-  const [uploading, setUploading] = useState(false);
   const [photos, setPhotos] = useState<Photo[]>([]);
 
   useEffect(() => {
@@ -37,16 +36,21 @@ function App() {
     const file = formData.get('image') as File;
 
     if(file && file.size > 0){
-      setUploading(true);
-      const result = await Photos.insert(file);
-      setUploading(false);
-
-      if(result instanceof Error){
-        alert(`${result.name} - ${result.message}`)
-      }
-      else {
-        setPhotos([...photos, result]);
-      }
+      toast.promise(Photos.insert(file), {
+        pending: 'Uploading Photo to Bucket',
+        success: {
+          render: res => {
+              setPhotos([...photos, res.data as Photo]);
+              return 'Photo Uploaded';
+              }
+        },
+        error: {
+          render: rej => {
+            const error: Error = rej.data as Error;
+            return `${error.name} - ${error.message}`
+          }
+        }
+      })
     }
   };
 
@@ -59,7 +63,6 @@ function App() {
         <C.UploadForm method='POST' onSubmit={handleFormSubmit}>
             <input type="file" name='image' />
             <input type="submit" value='Send' />
-            {uploading && 'Uploading image...'}
         </C.UploadForm>
 
         {photos.length > 0 &&
